@@ -1,0 +1,29 @@
+[
+  {
+    "OID": "300",
+    "CID": "101",
+    "products": [
+      {"PID": "200", "quantity": "10", "price": "1.00"},
+      {"PID": "201", "quantity": "15", "price": "2.00"},
+      {"PID": "202", "quantity": "20", "price": "3.00"}
+    ]
+  },
+  {
+    "OID": "301",
+    "CID": "102",
+    "products": [
+      {"PID": "202", "quantity": "25", "price": "3.00"},
+      {"PID": "203", "quantity": "30", "price": "4.00"}
+    ]
+  },
+  {
+    "OID": "302",
+    "CID": "101",
+    "products": [
+      {"PID": "200", "quantity": "35", "price": "1.00"},
+      {"PID": "201", "quantity": "40", "price": "2.00"},
+      {"PID": "202", "quantity": "45", "price": "3.00"},
+      {"PID": "203", "quantity": "50", "price": "4.00"}
+    ]
+  }
+]

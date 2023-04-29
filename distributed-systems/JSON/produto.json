@@ -1,0 +1,6 @@
+[
+  {"PID": "200", "name": "product_A", "quantity": "50", "price": "1.00"},
+  {"PID": "201", "name": "product_B", "quantity": "50", "price": "2.00"},
+  {"PID": "202", "name": "product_C", "quantity": "50", "price": "3.00"},
+  {"PID": "203", "name": "product_D", "quantity": "50", "price": "4.00"}
+]

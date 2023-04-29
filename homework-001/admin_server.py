@@ -4,17 +4,25 @@
 
 from concurrent import futures
 
-import database
+from database import Database
 import grpc
 import logging
 import services_pb2
 import services_pb2_grpc
 
+db = Database()
+clients = db.clients
+products = db.products
+orders = db.orders
 
 class AdminPortalServicer(services_pb2_grpc.AdminPortalServicer):
 
     def CreateClient(self, request, context):
-        return super().CreateClient(request, context)
+        try:
+            clients.insert(request.data, request.CID)
+            return services_pb2.Reply(error=0, description=f'Client {request.data}, CID: {request.CID} was added')
+        except Exception as error:
+            return services_pb2.Reply(error=1, description=str(error))
 
     def RetrieveClient(self, request, context):
         return super().RetrieveClient(request, context)
