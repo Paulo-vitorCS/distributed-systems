@@ -76,6 +76,60 @@ class Database:
             self.clients.pop(pid)
             print(self.clients)
 
+    def create_order(self, oid, cid, data):
+        if cid in self.clients:
+            if oid in self.orders:
+                raise Exception("The database already contains the entered OID")
+            else:
+                data = json.loads(data)
+                self.orders.update({oid: data})
+                print(self.orders)
+        else:
+            raise Exception("The client ID does not exist in database")
+
+    def retrieve_order(self, message):
+        info = json.loads(message)
+        cid = info['CID']
+        oid = info['OID']
+        total = 0
+
+        data = dict(*[value for value in self.orders.values() if value['CID'] == cid and value['OID'] == oid])
+
+        if data:
+            for aux in data['products']:
+                total += float(aux['quantity']) * float(aux['price'])
+            return data, total
+        else:
+            return {"OID": "0", "CID": "0", "products": '[]'}, total
+
+    def update_order(self, cid, oid, data):
+        try:
+            if cid in self.clients:
+                if oid in self.orders:
+                    data = json.loads(data)
+                    self.orders.update({oid: data})
+                    print(self.orders)
+                else:
+                    raise Exception('The database does not contains the order ID')
+            else:
+                raise Exception('The database does not contains the client ID')
+        except Exception as error:
+            raise Exception(str(error))
+
+    def delete_order(self, oid):
+        if oid not in self.orders:
+            raise Exception('The database does not contains the order ID')
+        else:
+            self.orders.pop(oid)
+            print(self.orders)
+
+    def retrieve_orders(self, cid):
+        order_list = []
+        for value in self.orders.values():
+            if value['CID'] == cid:
+                order_list.append(value)
+        return order_list
+
     def load_initial_db(self):
         self.clients = {
             '100': {'CID': '100', 'name': 'Paulo'},
@@ -91,3 +145,23 @@ class Database:
             '202': {'PID': '202', 'name': 'product_C', 'quantity': '50', 'price': '3.00'},
             '203': {'PID': '203', 'name': 'product_D', 'quantity': '50', 'price': '4.00'}
         }
+
+        self.orders = {'300': {"OID": "300", "CID": "101",
+                               "products": [
+                                   {"PID": "200", "quantity": "10", "price": "1.00"},
+                                   {"PID": "201", "quantity": "15", "price": "2.00"},
+                                   {"PID": "202", "quantity": "20", "price": "3.00"}
+                               ]},
+                       "301": {"OID": "301", "CID": "102",
+                               "products": [
+                                   {"PID": "202", "quantity": "25", "price": "3.00"},
+                                   {"PID": "203", "quantity": "30", "price": "4.00"}
+                               ]},
+                       "302": {"OID": "302", "CID": "101",
+                               "products": [
+                                   {"PID": "200", "quantity": "35", "price": "1.00"},
+                                   {"PID": "201", "quantity": "40", "price": "2.00"},
+                                   {"PID": "202", "quantity": "45", "price": "3.00"},
+                                   {"PID": "203", "quantity": "50", "price": "4.00"}
+                               ]}
+                       }
