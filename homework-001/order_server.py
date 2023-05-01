@@ -3,18 +3,57 @@ from concurrent import futures
 from database import Database
 import grpc
 import logging
+import json
 import services_pb2
 import services_pb2_grpc
+import paho.mqtt.client as mqtt
+
 
 db = Database()
 
 
+class MQTTClient:
+    def __init__(self, topic):
+        self.topic = topic
+        self.broker = "mqtt.eclipseprojects.io"
+        self.client = mqtt.Client()
+        self.client.connect(self.broker)
+        self.client.on_connect = self.on_connect
+        self.client.on_message = self.on_message
+        # self.client.connect("localhost", 1883, 60)
+
+    def on_connect(self, client, userdata, flags, rc):
+        print(f"Connected with result code {str(rc)}")
+        client.subscribe(self.topic)
+
+    def on_message(self, client, userdata, msg):
+        print(f"Received message on topic {msg.topic}: {msg.payload.decode()}\n")
+        message = json.loads(msg.payload.decode())
+        print(message)
+        print(str(message))
+        if msg.topic == 'orders':
+            print(db.orders.values())
+            db.orders.update({message['OID']: str(message)})
+
+    def start(self):
+        self.client.loop_start()
+
+    def stop(self):
+        self.client.loop_stop()
+
+
 class OrderPortalServicer(services_pb2_grpc.OrderPortalServicer):
+
+    # def __init__(self):
+    #     self.mqtt_client = MQTTClient("orders")
+    #     self.mqtt_client.start()
 
     def CreateOrder(self, request, context):
         try:
             db.create_order(request.OID, request.CID, request.data)
             message = f'The OID: {request.OID} has been added successfully'
+            # message2 = f"{request.data}"
+            # self.mqtt_client.client.publish('orders', message2)
             return services_pb2.Reply(error=0, description=message)
         except Exception as error:
             return services_pb2.Reply(error=1, description=str(error))

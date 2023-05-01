@@ -14,6 +14,8 @@ class Database:
         self.orders = {}
         self.load_initial_db()
 
+    # ------------------ Clients Database ------------------ #
+
     def create_client(self, cid, data):
         if cid in self.clients:
             raise Exception('The database alrealdy contains the client ID')
@@ -45,6 +47,8 @@ class Database:
             self.clients.pop(cid)
             print(self.clients)
 
+    # ------------------ Products Database ------------------ #
+
     def create_product(self, pid, data):
         if pid in self.products:
             raise Exception('The database alrealdy contains the product ID')
@@ -75,6 +79,8 @@ class Database:
         else:
             self.clients.pop(pid)
             print(self.clients)
+
+    # ------------------ Orders Database ------------------ #
 
     def create_order(self, oid, cid, data):
         if cid in self.clients:
@@ -130,6 +136,8 @@ class Database:
                 order_list.append(value)
         return order_list
 
+    # ------------------ Data for loading ------------------ #
+
     def load_initial_db(self):
         self.clients = {
             '100': {'CID': '100', 'name': 'Paulo'},
@@ -143,7 +151,9 @@ class Database:
             '200': {'PID': '200', 'name': 'product_A', 'quantity': '50', 'price': '1.00'},
             '201': {'PID': '201', 'name': 'product_B', 'quantity': '50', 'price': '2.00'},
             '202': {'PID': '202', 'name': 'product_C', 'quantity': '50', 'price': '3.00'},
-            '203': {'PID': '203', 'name': 'product_D', 'quantity': '50', 'price': '4.00'}
+            '203': {'PID': '203', 'name': 'product_D', 'quantity': '50', 'price': '4.00'},
+            '204': {'PID': '204', 'name': 'product_E', 'quantity': '50', 'price': '5.00'},
+            '205': {'PID': '205', 'name': 'product_F', 'quantity': '50', 'price': '6.00'}
         }
 
         self.orders = {'300': {"OID": "300", "CID": "101",

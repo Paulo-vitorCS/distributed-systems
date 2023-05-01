@@ -126,7 +126,7 @@ def run():
                 elif option == 5:
                     delete_order(stub)
                 elif option == 6:
-                    print('Exiting order portal')
+                    print('Exiting order portal\n')
                     break
                 else:
                     print('Invalid option')
