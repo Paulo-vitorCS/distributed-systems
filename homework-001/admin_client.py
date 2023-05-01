@@ -12,6 +12,76 @@ import services_pb2
 import services_pb2_grpc
 
 
+def create_client(stub):
+    cid = input('CID: ')
+    name = input('Name: ')
+    data = json.dumps({'CID': cid, 'name': name})
+    response = stub.CreateClient(services_pb2.Client(CID=cid, data=data))
+    print('Admin client received:', response.description)
+
+
+def retrieve_client(stub):
+    cid = input('CID: ')
+    response = stub.RetrieveClient(services_pb2.ID(ID=cid))
+    if response.CID == '0':
+        print('The database does not contains the client')
+    else:
+        print('The client was found successfully')
+    print(json.loads(response.data))
+
+
+def update_client(stub):
+    cid = input('CID: ')
+    name = input('Enter a new name: ')
+    data = json.dumps({'CID': cid, 'name': name})
+    response = stub.UpdateClient(services_pb2.Client(CID=cid, data=data))
+    print('Admin client received:', response.description)
+
+
+def delete_client(stub):
+    cid = input('CID: ')
+    response = stub.DeleteClient(services_pb2.ID(ID=cid))
+    print('Admin client received:', response.description)
+
+
+def create_product(stub):
+    pid = input('PID: ')
+    name = input('Name: ')
+    quantity = input('Quantity: ')
+    price = input('Price: ')
+    data = {'PID': pid, 'name': name, 'quantity': quantity, 'price': price}
+    data = json.dumps(data)
+    response = stub.CreateProduct(services_pb2.Product(PID=pid, data=data))
+    print('Admin client received:', response.description)
+
+
+def retrieve_product(stub):
+    pid = input('PID: ')
+    response = stub.RetrieveProduct(services_pb2.ID(ID=pid))
+    if response.PID == '0':
+        print('The database does not contains the product')
+    else:
+        print('The product was found successfully')
+    print(json.loads(response.data))
+
+
+def update_product(stub):
+    pid = input('PID: ')
+    name = input('New name: ')
+    quantity = input('New quantity: ')
+    price = input('New price: ')
+    data = {'PID': pid, 'name': name, 'quantity': quantity, 'price': price}
+    data = json.dumps(data)
+    response = stub.UpdateProduct(services_pb2.Product(PID=pid, data=data))
+    print('Admin client received:', response.description)
+
+
+def delete_product(stub):
+    pid = input('PID: ')
+    response = stub.DeleteProduct(services_pb2.ID(ID=pid))
+    print('Admin client received:', response.description)
+
+
 def menu_clients():
 
     print('')
@@ -69,17 +139,13 @@ def client_options(stub):
             option = int(input('Enter an option: '))
             print('')
             if option == 1:
-                # insert_client(stub)
-                pass
+                create_client(stub)
             elif option == 2:
-                # update_client(stub)
-                pass
+                update_client(stub)
             elif option == 3:
-                # search_client(stub)
-                pass
+                retrieve_client(stub)
             elif option == 4:
-                # remove_client(stub)
-                pass
+                delete_client(stub)
             elif option == 5:
                 print('Exiting client options')
                 break
@@ -97,16 +163,13 @@ def product_options(stub):
             option = int(input('Enter an option: '))
             print('')
             if option == 1:
-                # insert_product(stub)
-                pass
+                create_product(stub)
             elif option == 2:
-                # update_product(stub)
-                pass
+                update_product(stub)
             elif option == 3:
-                # search_product(stub)
-                pass
+                retrieve_product(stub)
             elif option == 4:
-                # remove_product(stub)
+                delete_product(stub)
                 pass
             elif option == 5:
                 print('Exiting product options')

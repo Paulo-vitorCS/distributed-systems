@@ -11,39 +11,63 @@ import services_pb2
 import services_pb2_grpc
 
 db = Database()
-clients = db.clients
-products = db.products
-orders = db.orders
+
 
 class AdminPortalServicer(services_pb2_grpc.AdminPortalServicer):
 
     def CreateClient(self, request, context):
         try:
-            clients.insert(request.data, request.CID)
-            return services_pb2.Reply(error=0, description=f'Client {request.data}, CID: {request.CID} was added')
+            db.create_client(request.CID, request.data)
+            message = f'The CID: {request.CID} was added successfully'
+            return services_pb2.Reply(error=0, description=message)
         except Exception as error:
             return services_pb2.Reply(error=1, description=str(error))
 
     def RetrieveClient(self, request, context):
-        return super().RetrieveClient(request, context)
+        return db.retrieve_client(request.ID)
 
     def UpdateClient(self, request, context):
-        return super().UpdateClient(request, context)
+        try:
+            db.update_client(request.CID, request.data)
+            message = f'The CID: {request.CID} was updated successfully'
+            return services_pb2.Reply(error=0, description=message)
+        except Exception as error:
+            return services_pb2.Reply(error=1, description=str(error))
 
     def DeleteClient(self, request, context):
-        return super().DeleteClient(request, context)
+        try:
+            db.delete_client(request.ID)
+            message = f'The CID: {request.ID} was deleted successfully'
+            return services_pb2.Reply(error=0, description=message)
+        except Exception as error:
+            return services_pb2.Reply(error=1, description=str(error))
 
     def CreateProduct(self, request, context):
-        return super().CreateProduct(request, context)
+        try:
+            db.create_product(request.PID, request.data)
+            message = f'The PID: {request.PID} was added successfully'
+            return services_pb2.Reply(error=0, description=message)
+        except Exception as error:
+            return services_pb2.Reply(error=1, description=str(error))
 
     def RetrieveProduct(self, request, context):
-        return super().RetrieveProduct(request, context)
+        return db.retrieve_product(request.ID)
 
     def UpdateProduct(self, request, context):
-        return super().UpdateProduct(request, context)
+        try:
+            db.update_product(request.PID, request.data)
+            message = f'The PID: {request.PID} was updated successfully'
+            return services_pb2.Reply(error=0, description=message)
+        except Exception as error:
+            return services_pb2.Reply(error=1, description=str(error))
 
     def DeleteProduct(self, request, context):
-        return super().DeleteProduct(request, context)
+        try:
+            db.delete_product(request.ID)
+            message = f'The PID: {request.ID} was deleted successfully'
+            return services_pb2.Reply(error=0, description=message)
+        except Exception as error:
+            return services_pb2.Reply(error=1, description=str(error))
 
 
 def serve():
