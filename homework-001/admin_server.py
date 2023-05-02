@@ -74,6 +74,9 @@ def serve():
 
     port = input('Enter the port: ')
 
+    if len(port) == 0:
+        port = '50051'
+
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     services_pb2_grpc.add_AdminPortalServicer_to_server(AdminPortalServicer(), server)
     server.add_insecure_port('[::]:' + port)

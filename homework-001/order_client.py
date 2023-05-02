@@ -8,60 +8,79 @@ import logging
 
 
 def create_order(stub):
-    cid = input('Enter the CID: ')
-    oid = input('Enter the OID: ')
+    oid = input('OID: ')
+    cid = input('CID: ')
 
-    qtd = int(input('Enter the quantity of products: '))
+    orders = []
 
-    products = []
+    while True:
 
-    for i in range(1, qtd + 1):
+        print()
         pid = input('PID: ')
-        quantity = input('Quantity: ')
-        price = input('Price: ')
+        quantity = input('quantity: ')
 
-        data = {"PID": pid, "quantity": quantity, "price": price}
-        products.append(data)
+        aux = {'PID': pid, 'quantity': quantity}
+        orders.append(aux)
 
-    message = {"OID": oid, "CID": cid,  "products": products}
-    str_message = json.dumps(message)
+        option = input('Do you want to insert another product? (s/n): ')
 
-    response = stub.CreateOrder(services_pb2.Order(OID=oid, CID=cid, data=str_message))
-    print('Order client received:', response.description)
+        if str.lower(option) == 'n':
+            print()
+            break
+
+    data = json.dumps(orders)
+    response = stub.CreateOrder(services_pb2.Order(OID=oid, CID=cid, data=data))
+    print('Status:', response.description)
 
 
 def retrieve_order(stub):
-    cid = input('Enter the CID: ')
-    oid = input('Enter the OID: ')
-
-    message = {"CID": cid, "OID": oid}
-    str_message = json.dumps(message)
-
-    response = stub.RetrieveOrder(services_pb2.ID(ID=str_message))
-    print(f'Products: {response.data}')
+    oid = input('OID: ')
+    response = stub.RetrieveOrder(services_pb2.ID(ID=oid))
+    if response.OID == '0':
+        print('Status: The database does not contains the order')
+    else:
+        print('Status: The order was found successfully')
+    print(json.loads(response.data))
 
 
 def update_order(stub):
-    cid = input('Enter the CID: ')
-    oid = input('Enter the OID you want to change: ')
-    pid = input('Enter the PID you want to change: ')
-    qtd = input('Enter the quantity of products to update: ')
+    oid = input('OID: ')
+    cid = input('CID: ')
 
-    products = []
+    response = stub.RetrieveOrder(services_pb2.ID(ID=oid))
+    print('Order:', json.loads(response.data))
 
-    for i in range(1, qtd + 1):
-        pid = input('PID: ')
-        quantity = input('Quantity: ')
-        price = input('Price: ')
+    data = json.loads(response.data)
+    new_products = []
 
-        data = {"PID": pid, "quantity": quantity, "price": price}
-        products.append(data)
+    if data['OID'] != '0':
 
-    message = {"OID": oid, "CID": cid, "products": products}
-    str_message = json.dumps(message)
+        lst_products = data['product']
 
-    response = stub.UpdateOrder(services_pb2.Order(CID=cid, OID=oid, data=str_message))
-    print('Order client received: ', response.description)
+        for aux in lst_products:
+
+            print()
+            print(aux)
+            option = input('Do you want to change? (s/n): ')
+
+            if str.lower(option) == 's':
+                quantity = input('New quantity: ')
+                data_product = {'PID': aux['PID'], 'quantity': quantity}
+            else:
+                data_product = {'PID': aux['PID'], 'quantity': aux['quantity']}
+
+            new_products.append(data_product)
+
+    else:
+        print('Status: The database does not contains the order')
+        return
+
+    info = {'OID': oid, 'CID': cid, 'product': data['product'], "update": new_products}
+    info = json.dumps(info)
+
+    print()
+    response = stub.UpdateOrder(services_pb2.Order(OID=oid, CID=cid, data=info))
+    print('Status:', response.description)
 
 
 def delete_order(stub):
@@ -70,14 +89,15 @@ def delete_order(stub):
     print(f'Order client received: {response.description}')
 
 
-def retrieve_orders(stub):
+def retrieve_client_orders(stub):
     cid = input('CID: ')
     responses = stub.RetrieveClientOrders(services_pb2.ID(ID=cid))
 
-    print(f'Orders:', end=' ')
+    print('> Client orders:')
+
     for response in responses:
-        print(response.OID, end=' | ')
-    print('')
+        info = {"OID": response.OID, "CID": response.CID, "product": json.loads(response.data)}
+        print(info)
 
 
 def menu():
@@ -101,18 +121,18 @@ def menu():
 def run():
 
     port = input('Enter the port: ')
-    with grpc.insecure_channel('localhost:' + port) as channel:
 
+    if len(port) == 0:
+        port = '50051'
+
+    with grpc.insecure_channel('localhost:' + port) as channel:
         stub = services_pb2_grpc.OrderPortalStub(channel)
 
         while True:
-
             menu()
 
             try:
-
                 option = int(input('Enter an option: '))
-
                 print('')
 
                 if option == 1:
@@ -122,7 +142,7 @@ def run():
                 elif option == 3:
                     retrieve_order(stub)
                 elif option == 4:
-                    retrieve_orders(stub)
+                    retrieve_client_orders(stub)
                 elif option == 5:
                     delete_order(stub)
                 elif option == 6:

@@ -184,16 +184,16 @@ def run():
 
     port = input('Enter the port: ')
 
-    with grpc.insecure_channel('localhost:' + port) as channel:
+    if len(port) == 0:
+        port = '50051'
 
+    with grpc.insecure_channel('localhost:' + port) as channel:
         stub = services_pb2_grpc.AdminPortalStub(channel)
 
         while True:
-
             menu()
 
             try:
-
                 option = int(input('Option: '))
 
                 if option == 1:
