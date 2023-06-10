@@ -1,14 +1,12 @@
 import paho.mqtt.client as mqtt
-from database import Database
 import json
-
-
-db = Database()
+import database as db
 
 
 class MQTTClient:
 
     def __init__(self, topic):
+
         self.topic = topic
         self.broker = "mqtt.eclipseprojects.io"
         self.client = mqtt.Client()
@@ -17,6 +15,7 @@ class MQTTClient:
         self.client.on_message = self.on_message
 
     def on_connect(self, client, userdata, flags, rc):
+
         if rc == 0:
             print('Successful connection with MQTT broker')
             client.subscribe(self.topic)
@@ -24,6 +23,7 @@ class MQTTClient:
             print(f'Failed to connect with MQTT broker {rc}')
 
     def on_message(self, client, userdata, message):
+
         str_messages = message.payload.decode().split(';')
         print(f'Topic: {message.topic}/{str_messages[0]} | Message received: {str_messages[1]}')
 
@@ -31,24 +31,78 @@ class MQTTClient:
 
         if str_messages[0] == 'create_client':
             db.clients.update(msg)
+
         elif str_messages[0] == 'update_client':
-            pass
-        elif str_messages[0] == 'update_client':
-            pass
+            db.clients.update(msg)
+
         elif str_messages[0] == 'delete_client':
-            pass
+            cid = list(msg.keys())
+            if cid[0] in db.clients:
+                db.clients.pop(cid[0])
+
         elif str_messages[0] == 'create_product':
-            pass
+            db.products.update(msg)
+
         elif str_messages[0] == 'update_product':
-            pass
+            db.products.update(msg)
+
         elif str_messages[0] == 'delete_product':
-            pass
+            pid = list(msg.keys())
+            if pid[0] in db.products:
+                db.products.pop(pid[0])
+
         elif str_messages[0] == 'create_order':
-            pass
+            order = list(msg.values())
+            order = order[0]
+
+            lst = []
+
+            for i in order['product']:
+                d = {"PID": i['PID'], "quantity": i['quantity']}
+                lst.append(d)
+
+            data = json.dumps(lst)
+
+            if order['OID'] not in db.orders:
+                db.create_order(order['OID'], order['CID'], data)
+
         elif str_messages[0] == 'update_order':
-            pass
+            order = list(msg.values())
+            order = order[0]
+
+            lst_old = []
+            lst_new = []
+
+            for i in order['product']:
+                d = {"PID": i['PID'], "quantity": i['quantity']}
+                lst_old.append(d)
+
+            for i in order['update']:
+                d = {"PID": i['PID'], "quantity": i['quantity']}
+                lst_new.append(d)
+
+            data = {'OID': order['OID'], 'CID': order['CID'], 'product': lst_old, 'update': lst_new}
+            data = json.dumps(data)
+
+            flag = 0
+            check_order = json.loads(db.retrieve_order(order['OID']).data)
+            check_order = check_order['product']
+
+            for i in range(len(check_order)):
+                if check_order[i]['quantity'] != lst_new[i]['quantity']:
+                    flag += 1
+
+            if flag > 0:
+                db.update_order(order['OID'], order['CID'], data)
+
         elif str_messages[0] == 'delete_order':
-            pass
+            order = list(msg.values())
+            order = order[0]
+
+            check_order = json.loads(db.retrieve_order(order['OID']).data)
+
+            if check_order['OID'] != '0':
+                db.delete_order(order['OID'])
 
     def start(self):
         self.client.loop_start()
