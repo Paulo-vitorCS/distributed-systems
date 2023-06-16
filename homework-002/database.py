@@ -3,6 +3,9 @@
 # Date: 2023-04-29 - Time: 16:00
 
 import json
+import random
+import socket
+import sys
 
 import services_pb2
 
@@ -11,10 +14,65 @@ products = {}
 orders = {}
 
 
+def select_instance():
+    first_socket = None
+    second_socket = None
+    instance_set = random.randint(1, 3)
+
+    try:
+        hostname = socket.gethostname()
+
+        # Partition 001
+        first_socket = socket.socket()
+        first_socket.settimeout(1)
+
+        # Partition 002
+        second_socket = socket.socket()
+        second_socket.settimeout(1)
+
+        if instance_set == 1:
+            first_socket.connect((hostname, 5000))
+            second_socket.connect((hostname, 5001))
+            print('Partition 001: 5000 | Partition 002: 5001')
+
+        elif instance_set == 2:
+            first_socket.connect((hostname, 5002))
+            second_socket.connect((hostname, 5003))
+            print('Partition 001: 5002 | Partition 002: 5003')
+
+        else:
+            first_socket.connect((hostname, 5004))
+            second_socket.connect((hostname, 5005))
+            print('Partition 001: 5004 | Partition 002: 5005')
+
+    except Exception as error:
+        print('Instance allocation failed:', error)
+        sys.exit()
+
+    return first_socket, second_socket
+
+
+# Selected sockets for execution
+first_socket, second_socket = select_instance()
+
+
 def create_client(cid, data):
+
+    # CID = C-100
+    selected_socket = None
+
+    if int(cid.split('-')[1]) % 2 == 0:
+        selected_socket = first_socket
+    else:
+        selected_socket = second_socket
 
     if cid not in clients:
         data = json.loads(data)
+        db_message = json.dumps({'command': 'insert', 'key': cid, 'value': data})
+        selected_socket.send(db_message.encode())
+        answer = selected_socket.recv(1024)
+        # Getting the message to clear the buffer
+        response = json.loads(answer.decode())
         clients.update({cid: data})
         print(clients)
     else:
@@ -23,21 +81,47 @@ def create_client(cid, data):
 
 def retrieve_client(cid):
 
-    if cid in clients:
-        data = clients[cid]
-        data = json.dumps(data)
-        client = services_pb2.Client(CID=cid, data=data)
-        return client
+    # CID = C-100
+    selected_socket = None
+
+    if int(cid.split('-')[1]) % 2 == 0:
+        selected_socket = first_socket
     else:
-        data = {"CID": "0", "name": ""}
-        data = json.dumps(data)
-        return services_pb2.Client(CID='0', data=data)
+        selected_socket = second_socket
+
+    db_message = json.dumps({'command': 'retrieve', 'key': cid, 'value': None})
+    selected_socket.send(db_message.encode())
+    answer = selected_socket.recv(1024)
+
+    response = json.loads(answer.decode())
+
+    if response['data'] == {}:
+        response['data'] = {'CID': '0', 'name': ''}
+
+    data = response['data']
+    new_cid = response['data']['CID']
+    data = json.dumps(data)
+    client = services_pb2.Client(CID=new_cid, data=data)
+    return client
 
 
 def update_client(cid, data):
 
+    # CID = C-100
+    selected_socket = None
+
+    if int(cid.split('-')[1]) % 2 == 0:
+        selected_socket = first_socket
+    else:
+        selected_socket = second_socket
+
     if cid in clients:
         data = json.loads(data)
+        db_message = json.dumps({'command': 'update', 'key': cid, 'value': data})
+        selected_socket.send(db_message.encode())
+        answer = selected_socket.recv(1024)
+        # Getting the message to clear the buffer
+        response = json.loads(answer.decode())
         clients.update({cid: data})
         print(clients)
     else:
@@ -46,8 +130,21 @@ def update_client(cid, data):
 
 def delete_client(cid):
 
+    # CID = C-100
+    selected_socket = None
+
+    if int(cid.split('-')[1]) % 2 == 0:
+        selected_socket = first_socket
+    else:
+        selected_socket = second_socket
+
     if cid in clients:
         clients.pop(cid)
+        db_message = json.dumps({'command': 'delete', 'key': cid, 'value': None})
+        selected_socket.send(db_message.encode())
+        answer = selected_socket.recv(1024)
+        # Getting the message to clear the buffer
+        response = json.loads(answer.decode())
         print(clients)
     else:
         raise Exception('The database does not contains the client')
@@ -55,8 +152,21 @@ def delete_client(cid):
 
 def create_product(pid, data):
 
+    # PID = P-100
+    selected_socket = None
+
+    if int(pid.split('-')[1]) % 2 == 0:
+        selected_socket = first_socket
+    else:
+        selected_socket = second_socket
+
     if pid not in products:
         data = json.loads(data)
+        db_message = json.dumps({'command': 'insert', 'key': pid, 'value': data})
+        selected_socket.send(db_message.encode())
+        answer = selected_socket.recv(1024)
+        # Getting the message to clear the buffer
+        response = json.loads(answer.decode())
         products.update({pid: data})
         print(products)
     else:
@@ -65,21 +175,48 @@ def create_product(pid, data):
 
 def retrieve_product(pid):
 
-    if pid in products:
-        data = products[pid]
-        data = json.dumps(data)
-        product = services_pb2.Product(PID=pid, data=data)
-        return product
+    # PID = P-100
+    selected_socket = None
+
+    if int(pid.split('-')[1]) % 2 == 0:
+        selected_socket = first_socket
     else:
-        data = {"PID": "0", "name": "", "quantity": "", "price": ""}
-        data = json.dumps(data)
-        return services_pb2.Product(PID='0', data=data)
+        selected_socket = second_socket
+
+    db_message = json.dumps({'command': 'retrieve', 'key': pid, 'value': None})
+    selected_socket.send(db_message.encode())
+    answer = selected_socket.recv(1024)
+
+    response = json.loads(answer.decode())
+
+    if response['data'] == {}:
+        response['data'] = {"PID": "0", "name": "", "quantity": "", "price": ""}
+
+    data = response['data']
+    new_pid = response['data']['PID']
+    data = json.dumps(data)
+    product = services_pb2.Product(PID=new_pid, data=data)
+
+    return product
 
 
 def update_product(pid, data):
 
+    # PID = P-100
+    selected_socket = None
+
+    if int(pid.split('-')[1]) % 2 == 0:
+        selected_socket = first_socket
+    else:
+        selected_socket = second_socket
+
     if pid in products:
         data = json.loads(data)
+        db_message = json.dumps({'command': 'update', 'key': pid, 'value': data})
+        selected_socket.send(db_message.encode())
+        answer = selected_socket.recv(1024)
+        # Getting the message to clear the buffer
+        response = json.loads(answer.decode())
         products.update({pid: data})
         print(products)
     else:
@@ -87,9 +224,21 @@ def update_product(pid, data):
 
 
 def delete_product(pid):
+    # PID = P-100
+    selected_socket = None
+
+    if int(pid.split('-')[1]) % 2 == 0:
+        selected_socket = first_socket
+    else:
+        selected_socket = second_socket
 
     if pid in products:
         products.pop(pid)
+        db_message = json.dumps({'command': 'delete', 'key': pid, 'value': None})
+        selected_socket.send(db_message.encode())
+        answer = selected_socket.recv(1024)
+        # Getting the message to clear the buffer
+        response = json.loads(answer.decode())
         print(products)
     else:
         raise Exception('The database does not contains the product')
@@ -114,11 +263,13 @@ def create_order(oid, cid, data):
             if int(product['quantity']) >= int(aux['quantity']):
 
                 new_quantity = str(int(product['quantity']) - int(aux['quantity']))
-                data_product = {'PID': aux['PID'], 'name': product['name'], 'quantity': new_quantity, 'price': product['price']}
+                data_product = {'PID': aux['PID'], 'name': product['name'], 'quantity': new_quantity,
+                                'price': product['price']}
                 data_product = json.dumps(data_product)
                 update_product(aux['PID'], data_product)
 
-                data_order = {'PID': aux['PID'], 'name': product['name'], 'quantity': aux['quantity'], 'price': product['price']}
+                data_order = {'PID': aux['PID'], 'name': product['name'], 'quantity': aux['quantity'],
+                              'price': product['price']}
                 lst_products.append(data_order)
 
         if len(lst_products) == 0:
@@ -169,7 +320,8 @@ def update_order(oid, cid, data):
         if old['quantity'] != new['quantity']:
 
             new_quantity = str(int(old['quantity']) + int(aux_product['quantity']))
-            info = {"PID": old['PID'], "name": aux_product['name'], "quantity": new_quantity, "price": aux_product['price']}
+            info = {"PID": old['PID'], "name": aux_product['name'], "quantity": new_quantity,
+                    "price": aux_product['price']}
             info = json.dumps(info)
             update_product(old['PID'], info)
 
@@ -192,7 +344,8 @@ def update_order(oid, cid, data):
                 info = {"PID": new['PID'], "name": product['name'], "quantity": new_quantity, "price": product['price']}
                 info = json.dumps(info)
                 update_product(new['PID'], info)
-                info = {"PID": new['PID'], "name": product['name'], "quantity": new['quantity'], "price": product['price']}
+                info = {"PID": new['PID'], "name": product['name'], "quantity": new['quantity'],
+                        "price": product['price']}
                 lst_order.append(info)
 
         elif old['quantity'] == new['quantity'] and int(new['quantity']) > 0:
@@ -217,7 +370,8 @@ def delete_order(oid):
         for aux in lst_products:
             data_product = products[aux['PID']]
             new_quantity = str(int(aux['quantity']) + int(data_product['quantity']))
-            new_data = {'PID': aux['PID'], 'name': data_product['name'], 'quantity': new_quantity, 'price': data_product['price']}
+            new_data = {'PID': aux['PID'], 'name': data_product['name'], 'quantity': new_quantity,
+                        'price': data_product['price']}
             new_data = json.dumps(new_data)
             update_product(aux['PID'], new_data)
 

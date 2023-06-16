@@ -27,7 +27,7 @@ class AdminPortalServicer(services_pb2_grpc.AdminPortalServicer):
         try:
             return database.retrieve_client(request.ID)
         except Exception as error:
-            data = {"CID": "0", "name": str(error)}
+            data = {"CID": "0", "name": ' '}
             data = json.dumps(data)
             return services_pb2.Client(CID='0', data=data)
 
@@ -60,8 +60,11 @@ class AdminPortalServicer(services_pb2_grpc.AdminPortalServicer):
 
         try:
             return database.retrieve_product(request.ID)
+
         except Exception as error:
-            return services_pb2.Product(PID='0', data=str(error))
+            data = {'PID': '0', 'name': ' ', 'quantity': ' ', 'price': ' '}
+            data = json.dumps(data)
+            return services_pb2.Product(PID='0', data=data)
 
     def UpdateProduct(self, request, context):
 
@@ -82,7 +85,6 @@ class AdminPortalServicer(services_pb2_grpc.AdminPortalServicer):
 
 
 def serve():
-
     port = input('Enter the port: ')
 
     if len(port) == 0:
@@ -99,6 +101,5 @@ def serve():
 
 
 if __name__ == '__main__':
-
     logging.basicConfig()
     serve()
